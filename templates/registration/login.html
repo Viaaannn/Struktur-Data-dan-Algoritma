@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — KOSTHINK</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v={% now 'U' %}" />
+</head>
+<body class="auth-page-bg">
+
+  <div class="auth-clean-card">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#111827" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+        <path d="M2 17l10 5 10-5"></path>
+        <path d="M2 12l10 5 10-5"></path>
+      </svg>
+      <h1 style="font-size: 20px; font-weight: 700; color: #111827;">Masuk ke KOSTHINK</h1>
+      <p style="font-size: 13px; color: #4b5563; margin-top: 4px;">Catatan ide mahasiswa profesional</p>
+    </div>
+
+    {% if form.errors %}
+    <div style="background-color: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; padding: 10px; border-radius: 6px; font-size:13px; margin-bottom:16px; text-align:center;">
+      Username atau password salah. Silakan coba lagi.
+    </div>
+    {% endif %}
+
+    <form method="post" id="login-form">
+      {% csrf_token %}
+      <div>
+        <label for="id_username" style="font-size: 13px; font-weight: 600; color: #111827;">Username</label>
+        <input class="auth-input-style" type="text" name="username" id="id_username" placeholder="Masukkan username" autofocus required />
+      </div>
+
+      <div>
+        <label for="id_password" style="font-size: 13px; font-weight: 600; color: #111827;">Password</label>
+        <input class="auth-input-style" type="password" name="password" id="id_password" placeholder="Masukkan password" required />
+      </div>
+
+      <input type="hidden" name="next" value="{{ next }}" />
+      <button class="btn-auth-submit" type="submit">Masuk</button>
+    </form>
+
+    <div style="margin-top: 24px; text-align: center; font-size: 13px;">
+      <span style="color: #4b5563;">Belum punya akun?</span>
+      <a href="{% url 'notes:register' %}" style="color: #2563eb; font-weight: 500; text-decoration: none;">Daftar sekarang</a>
+    </div>
+  </div>
+
+</body>
+</html>

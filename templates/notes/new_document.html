@@ -1,0 +1,81 @@
+{% extends 'notes/base.html' %}
+
+{% block title %}Buat Dokumen Baru — KOSTHINK{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'notes:dashboard' %}" style="text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">Home</a>
+    <span style="color: #cbd5e1;">/</span>
+    
+    {% if category %}
+        <a href="{% url 'notes:category_detail' category.id %}" style="text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">{{ category.name }}</a>
+        <span style="color: #cbd5e1;">/</span>
+    {% endif %}
+    
+    <span style="color: #0f172a; font-weight: 600;">Dokumen Baru</span>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 60px 24px; max-width: 500px; margin: 0 auto;">
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="width: 48px; height: 48px; background: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #0f172a;">Beri Judul Dokumen Anda</h2>
+            <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b;">
+                {% if category %}
+                    Dokumen ini akan otomatis disimpan di dalam folder <strong>{{ category.name }}</strong>.
+                {% else %}
+                    Silakan isi judul dan pilih lokasi penyimpanan dokumen.
+                {% endif %}
+            </p>
+        </div>
+
+        {% if error %}
+        <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; text-align: center;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="{% url 'notes:new_document' %}" method="post">
+            {% csrf_token %}
+            
+            {% if category %}
+                <input type="hidden" name="category_id" value="{{ category.id }}">
+            {% else %}
+                <div style="margin-bottom: 16px;">
+                    <label for="category_id" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Pilih Lokasi Folder</label>
+                    <select id="category_id" name="category_id" 
+                            style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; background-color: white; cursor: pointer;">
+                        <option value="">-- Beranda (Tanpa Folder) --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            
+            <div style="margin-bottom: 24px;">
+                <label for="title" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Judul Dokumen</label>
+                <input type="text" id="title" name="title" placeholder="Masukkan judul..." required autofocus
+                       style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: border 0.2s;"
+                       onfocus="this.style.border='1px solid #0f172a'" onblur="this.style.border='1px solid #cbd5e1'">
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <a href="{% if category %}{% url 'notes:category_detail' category.id %}{% else %}{% url 'notes:dashboard' %}{% endif %}" 
+                   style="flex: 1; text-align: center; text-decoration: none; border: 1px solid #cbd5e1; color: #334155; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: 500; background: white; transition: background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                    Batal
+                </a>
+                <button type="submit" 
+                        style="flex: 1; background: #0f172a; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#0f172a'">
+                    Konfirmasi & Buat
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

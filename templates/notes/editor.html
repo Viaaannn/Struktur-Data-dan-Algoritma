@@ -1,0 +1,386 @@
+{% extends 'notes/base.html' %}
+{% load static %}
+
+{% block title %}Edit: {{ current_doc.title }} — KOSTHINK{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stack-empty {
+        text-align: center;
+        color: #94a3b8;
+        font-size: 12px;
+        font-style: italic;
+        padding: 20px 0;
+    }
+
+    .stack-item {
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        border: 1px solid #cbd5e1;
+        margin-top: 6px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .stack-item--top {
+        background: #eff6ff;
+        border-color: #3b82f6;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        transform: scale(1.02);
+    }
+
+    .stack-item--redo.stack-item--top {
+        background: #faf5ff;
+        border-color: #a855f7;
+        box-shadow: 0 2px 4px rgba(168, 85, 247, 0.1);
+    }
+
+    .stack-item__badge {
+        font-weight: 700;
+        font-size: 9px;
+        opacity: 0.9;
+        letter-spacing: 0.5px;
+        background: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'notes:dashboard' %}"
+    style="text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s;"
+    onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">Home</a>
+<span style="color: #cbd5e1;">/</span>
+
+{% if current_doc.category %}
+<a href="{% url 'notes:category_detail' current_doc.category.id %}"
+    style="text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s;"
+    onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">{{ current_doc.category.name }}</a>
+<span style="color: #cbd5e1;">/</span>
+{% endif %}
+
+<span style="color: #0f172a; font-weight: 600;">{{ current_doc.title|default:"Tanpa Judul" }}</span>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 24px; display: flex; gap: 24px; height: calc(100vh - 64px);">
+
+    <div
+        style="flex: 1; display: flex; flex-direction: column; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); overflow: hidden;">
+
+        <form id="editor-form" action="{% url 'notes:save_document' current_doc.id %}" method="post"
+            style="display: contents;">
+            {% csrf_token %}
+            <div
+                style="padding: 16px 24px; border-bottom: 1px solid #cbd5e1; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <input type="text" name="title" id="editor-title" value="{{ current_doc.title }}"
+                        placeholder="Judul Dokumen..."
+                        style="font-size: 20px; font-weight: 700; color: #0f172a; border: none; outline: none; background: transparent; width: 300px;">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btn-undo" onclick="performUndo()"
+                        style="background: white; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);"
+                        title="Shortcut: Ctrl+Z">Undo (Ctrl+Z)</button>
+                    <button type="button" id="btn-redo" onclick="performRedo()"
+                        style="background: white; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);"
+                        title="Shortcut: Ctrl+X">Redo (Ctrl+X)</button>
+
+                    <div style="width: 1px; background: #cbd5e1; margin: 0 4px;"></div> <button type="submit"
+                        id="btn-save"
+                        style="background: #0f172a; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; box-shadow: 0 2px 4px rgba(15,23,42,0.1);">Simpan</button>
+
+                    <button type="button" data-url="{% url 'notes:delete_document' current_doc.id %}"
+                        data-title="{{ current_doc.title }}"
+                        onclick="openDeleteModal(this.getAttribute('data-url'), this.getAttribute('data-title'))"
+                        style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Hapus</button>
+                </div>
+            </div>
+
+            <textarea name="content" id="editor-content" placeholder="Ketik sesuatu di sini..."
+                style="flex: 1; width: 100%; padding: 32px 40px; border: none; outline: none; resize: none; font-size: 16px; line-height: 1.8; color: #334155; font-family: inherit; box-sizing: border-box;"></textarea>
+        </form>
+
+        <div
+            style="padding: 12px 24px; border-top: 1px solid #cbd5e1; background: #f8fafc; display: flex; justify-content: space-between; font-size: 13px; color: #64748b; font-weight: 500;">
+            <span id="save-status">Tersimpan</span>
+            <span id="char-count">0 karakter</span>
+        </div>
+    </div>
+
+    <div style="width: 340px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding-right: 4px;">
+
+        <div>
+            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">
+                STACK VISUALIZER</h3>
+            <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.4;">Visualisasi LIFO secara real-time
+                saat Anda mengetik kata baru (Spasi/Enter).</p>
+        </div>
+
+        <div
+            style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span style="font-size: 14px; font-weight: 700; color: #3b82f6;">Undo Stack</span>
+                <span id="undo-count"
+                    style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;">0</span>
+            </div>
+            <div
+                style="border: 2px dashed #cbd5e1; padding: 14px; border-radius: 8px; height: 200px; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column-reverse;">
+                <div id="undo-stack-visual" style="display: flex; flex-direction: column;"></div>
+            </div>
+            <div
+                style="text-align: center; margin-top: 10px; font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 1px;">
+                BOTTOM OF STACK</div>
+        </div>
+
+        <div
+            style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span style="font-size: 14px; font-weight: 700; color: #a855f7;">Redo Stack</span>
+                <span id="redo-count"
+                    style="background: #faf5ff; color: #9333ea; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;">0</span>
+            </div>
+            <div
+                style="border: 2px dashed #cbd5e1; padding: 14px; border-radius: 8px; height: 200px; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column-reverse;">
+                <div id="redo-stack-visual" style="display: flex; flex-direction: column;"></div>
+            </div>
+            <div
+                style="text-align: center; margin-top: 10px; font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 1px;">
+                BOTTOM OF STACK</div>
+        </div>
+    </div>
+</div>
+
+<div id="deleteDocModal"
+    style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); display: none; justify-content: center; align-items: center; z-index: 9999;"
+    onclick="if(event.target === this) this.style.display='none';">
+    <div
+        style="background: white; padding: 32px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center;">
+        <div
+            style="width: 56px; height: 56px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+        </div>
+        <h3 style="margin-top: 0; font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Hapus
+            Dokumen?</h3>
+        <p style="color: #64748b; font-size: 15px; margin-bottom: 32px; line-height: 1.5;">Apakah Anda yakin ingin
+            menghapus dokumen <strong id="deleteDocTitle" style="color: #0f172a;"></strong>?</p>
+        <form id="deleteDocForm" method="post" action="">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: center; gap: 12px;">
+                <button type="button" onclick="document.getElementById('deleteDocModal').style.display='none'"
+                    style="padding: 12px 20px; border: 1px solid #cbd5e1; background: white; border-radius: 8px; color: #64748b; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1;">Batal</button>
+                <button type="submit"
+                    style="padding: 12px 20px; background: #ef4444; border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1;">Ya,
+                    Hapus</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ==========================================
+    // IMPLEMENTASI STRUKTUR DATA STACK (LIFO)
+    // ==========================================
+    class Stack {
+        constructor() {
+            this.items = [];
+        }
+        push(element) {
+            this.items.push(element);
+        }
+        pop() {
+            if (this.items.length === 0) return null;
+            return this.items.pop();
+        }
+        peek() {
+            if (this.items.length === 0) return null;
+            return this.items[this.items.length - 1];
+        }
+        isEmpty() {
+            return this.items.length === 0;
+        }
+        size() {
+            return this.items.length;
+        }
+        clear() {
+            this.items = [];
+        }
+        getItems() {
+            return [...this.items]; // Return copy of array
+        }
+    }
+
+    // Inisialisasi Stack
+    const undoStack = new Stack();
+    const redoStack = new Stack();
+
+    const editorContent = document.getElementById('editor-content');
+    const charCount = document.getElementById('char-count');
+    const saveStatus = document.getElementById('save-status');
+
+    // Load data awal dari database
+    const initialText = `{{ current_doc.content|escapejs }}`;
+    editorContent.value = initialText;
+
+    // Masukkan state awal ke Undo Stack
+    undoStack.push(initialText);
+    updateVisualizer();
+    updateCharCount();
+
+    // ==========================================
+    // LOGIKA UNDO/REDO INSTAN (PER KATA/SPASI)
+    // ==========================================
+    editorContent.addEventListener('input', function (e) {
+        updateCharCount();
+        saveStatus.textContent = 'Belum disimpan...';
+        saveStatus.style.color = '#eab308'; // Kuning warning
+
+        const currentText = editorContent.value;
+        const lastChar = currentText.charAt(currentText.length - 1);
+
+        // Hanya trigger "Push ke Stack" jika user mengetik Spasi, Enter, Titik, atau Koma
+        if (lastChar === ' ' || lastChar === '\n' || lastChar === '.' || lastChar === ',') {
+            if (currentText !== undoStack.peek()) {
+                undoStack.push(currentText);
+                redoStack.clear(); // Bersihkan Redo setiap ada alur ketikan baru
+                updateVisualizer();
+            }
+        }
+    });
+
+    function performUndo() {
+        const currentText = editorContent.value;
+
+        // KONDISI 1: User mengetik kata baru tapi belum memencet spasi.
+        if (currentText !== undoStack.peek()) {
+            redoStack.push(currentText);
+            editorContent.value = undoStack.peek() || "";
+            updateCharCount();
+            updateVisualizer();
+            return;
+        }
+
+        // KONDISI 2: Teks di editor sudah sinkron dengan TOP di Undo Stack.
+        if (undoStack.size() > 1) {
+            const poppedText = undoStack.pop();
+            redoStack.push(poppedText);
+
+            editorContent.value = undoStack.peek();
+            updateCharCount();
+            updateVisualizer();
+        }
+    }
+
+    function performRedo() {
+        if (!redoStack.isEmpty()) {
+            const restoredText = redoStack.pop();
+            undoStack.push(restoredText);
+
+            editorContent.value = restoredText;
+            updateCharCount();
+            updateVisualizer();
+        }
+    }
+
+    // ==========================================
+    // SHORTCUT KEYBOARD (Ctrl+Z dan Ctrl+X)
+    // ==========================================
+    document.addEventListener('keydown', function (e) {
+        // Ctrl + Z = UNDO
+        if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            performUndo();
+        }
+        // Ctrl + X = REDO
+        else if (e.ctrlKey && e.key.toLowerCase() === 'x') {
+            e.preventDefault();
+            performRedo();
+        }
+    });
+
+    // ==========================================
+    // LOGIKA VISUALISASI STACK KE UI
+    // ==========================================
+    function updateVisualizer() {
+        const undoVisual = document.getElementById('undo-stack-visual');
+        const redoVisual = document.getElementById('redo-stack-visual');
+
+        document.getElementById('undo-count').textContent = undoStack.size();
+        document.getElementById('redo-count').textContent = redoStack.size();
+
+        undoVisual.innerHTML = '';
+        redoVisual.innerHTML = '';
+
+        // Render Undo Stack
+        if (undoStack.isEmpty()) {
+            undoVisual.innerHTML = '<div class="stack-empty">Stack kosong</div>';
+        } else {
+            const items = undoStack.getItems();
+            for (let i = 0; i < items.length; i++) {
+                const textStr = items[i].trim() === "" ? "[Teks Kosong]" : items[i];
+                const isTop = (i === items.length - 1) ? 'stack-item--top' : '';
+                const badge = (i === items.length - 1) ? '<span class="stack-item__badge">TOP</span>' : '';
+
+                undoVisual.innerHTML += `
+                    <div class="stack-item ${isTop}">
+                        <span style="overflow:hidden; text-overflow:ellipsis; max-width:75%;">${textStr}</span>
+                        ${badge}
+                    </div>
+                `;
+            }
+        }
+
+        // Render Redo Stack
+        if (redoStack.isEmpty()) {
+            redoVisual.innerHTML = '<div class="stack-empty">Stack kosong</div>';
+        } else {
+            const rItems = redoStack.getItems();
+            for (let i = 0; i < rItems.length; i++) {
+                const textStr = rItems[i].trim() === "" ? "[Teks Kosong]" : rItems[i];
+                const isTop = (i === rItems.length - 1) ? 'stack-item--top stack-item--redo' : '';
+                const badge = (i === rItems.length - 1) ? '<span class="stack-item__badge" style="color:#a855f7;">TOP</span>' : '';
+
+                redoVisual.innerHTML += `
+                    <div class="stack-item ${isTop}">
+                        <span style="overflow:hidden; text-overflow:ellipsis; max-width:75%;">${textStr}</span>
+                        ${badge}
+                    </div>
+                `;
+            }
+        }
+
+        // Scroll otomatis agar posisi TOP selalu terlihat
+        undoVisual.parentElement.scrollTop = 0; // Karena flex-direction: column-reverse
+        redoVisual.parentElement.scrollTop = 0;
+    }
+
+    function updateCharCount() {
+        charCount.textContent = editorContent.value.length + ' karakter';
+    }
+
+    // Modal Hapus
+    function openDeleteModal(url, docTitle) {
+        document.getElementById('deleteDocForm').action = url;
+        document.getElementById('deleteDocTitle').textContent = docTitle;
+        document.getElementById('deleteDocModal').style.display = 'flex';
+    }
+</script>
+{% endblock %}

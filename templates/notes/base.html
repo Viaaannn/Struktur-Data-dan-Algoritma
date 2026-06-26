@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}KOSTHINK{% endblock %}</title>
+    {% load static %}
+    <style>
+        /* CSS Reset & Dasar */
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Tombol Sidebar Seragam */
+        .btn-dark {
+            display: block;
+            padding: 10px;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            font-family: inherit;
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1);
+        }
+
+        .btn-dark:hover {
+            background: #1e293b;
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Sidebar Styles (Dipertegas dengan border dan shadow) */
+        #sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            z-index: 20;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Sidebar Dropdown Styles */
+        .folder-item {
+            cursor: pointer;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            user-select: none;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-bottom: 2px;
+        }
+
+        .folder-item:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .folder-icon {
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .folder-arrow {
+            margin-left: auto;
+            font-size: 10px;
+            transition: transform 0.2s;
+            color: #94a3b8;
+        }
+
+        .folder-content {
+            padding-left: 12px;
+            background-color: transparent;
+            border-left: 2px solid #e2e8f0;
+            margin-left: 18px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+        }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            margin-bottom: 2px;
+        }
+
+        .doc-item:hover {
+            color: #0f172a;
+            background-color: #e2e8f0;
+        }
+
+        .empty-doc {
+            font-size: 12px;
+            color: #94a3b8;
+            padding: 6px 10px;
+            display: block;
+            font-style: italic;
+        }
+
+        /* Resizer (Diperjelas warnanya saat di-hover) */
+        #resizer {
+            width: 5px;
+            background: transparent;
+            cursor: col-resize;
+            position: relative;
+            z-index: 30;
+            transition: background 0.2s;
+        }
+
+        #resizer:hover,
+        #resizer.active {
+            background: #94a3b8;
+        }
+
+        /* Area Konten Utama */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background-color: #f8fafc;
+        }
+
+        /* Navbar Utama (Dipertegas) */
+        .navbar {
+            height: 64px;
+            background: white;
+            border-bottom: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .toggle-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        }
+
+        .toggle-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <aside id="sidebar">
+        <div
+            style="padding: 20px 24px; border-bottom: 1px solid #cbd5e1; font-weight: 800; font-size: 20px; color: #0f172a; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            KOSTHINK
+        </div>
+
+        <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="{% url 'notes:new_document' %}" class="btn-dark">+ Dokumen Baru</a>
+            <button onclick="document.getElementById('addCategoryModal').style.display='flex'" class="btn-dark">+
+                Kategori Baru</button>
+        </div>
+
+        <div style="padding: 0 16px; border-top: 1px solid #e2e8f0; overflow-y: auto; flex: 1; padding-top: 24px;">
+            <div
+                style="font-size: 11px; color: #64748b; font-weight: 700; letter-spacing: 0.8px; margin-bottom: 12px; padding-left: 8px;">
+                DAFTAR FOLDER
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                {% for cat in categories %}
+                <div class="folder-item" onclick="toggleFolder('folder-{{ cat.id }}')">
+                    <span class="folder-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </span>
+                    <span class="folder-name">{{ cat.name }}</span>
+                    <span class="folder-arrow" id="arrow-{{ cat.id }}">▼</span>
+                </div>
+
+                <div id="folder-{{ cat.id }}" class="folder-content" style="display: none;">
+                    {% for doc in cat.documents.all %}
+                    <a href="{% url 'notes:editor' doc.id %}" class="doc-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        {{ doc.title }}
+                    </a>
+                    {% empty %}
+                    <span class="empty-doc">Belum ada dokumen</span>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <span style="font-size: 13px; color: #94a3b8; padding: 8px 12px;">Belum ada folder</span>
+                {% endfor %}
+            </div>
+        </div>
+    </aside>
+
+    <div id="resizer" title="Geser untuk mengatur lebar"></div>
+
+    <main id="main-content">
+        <header class="navbar">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button id="toggle-sidebar-btn" class="toggle-btn" title="Buka/Tutup Sidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div style="font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                    {% block breadcrumb %}
+                    <a href="{% url 'notes:dashboard' %}"
+                        style="text-decoration: none; color: #0f172a; font-weight: 600;">Home</a>
+                    {% endblock %}
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 20px;">
+
+                <div
+                    style="display: flex; align-items: center; gap: 8px; color: #475569; font-size: 14px; font-weight: 500;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    {{ request.user.username }}
+                </div>
+
+                <div style="width: 1px; height: 24px; background-color: #e2e8f0;"></div>
+
+                <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                        style="background: white; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);"
+                        onmouseover="this.style.background='#fef2f2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5'; this.style.boxShadow='0 2px 4px rgba(239,68,68,0.1)';"
+                        onmouseout="this.style.background='white'; this.style.color='#475569'; this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.02)';">
+                        Keluar
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <div style="flex: 1; overflow-y: auto; padding-bottom: 40px;">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <div id="addCategoryModal"
+        style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); display: none; justify-content: center; align-items: center; z-index: 9999;"
+        onclick="if(event.target === this) this.style.display='none';">
+        <div
+            style="background: white; padding: 28px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); transform: translateY(0); transition: transform 0.3s;">
+            <h3 style="margin-top: 0; font-size: 18px; font-weight: 600; color: #0f172a; margin-bottom: 20px;">Buat
+                Folder Kategori Baru</h3>
+            <form action="{% url 'notes:create_category' %}" method="post">
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="Nama Kategori..." required
+                    style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; margin-bottom: 24px; box-sizing: border-box; outline: none; transition: border 0.2s;"
+                    onfocus="this.style.borderColor='#0f172a'">
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" onclick="document.getElementById('addCategoryModal').style.display='none'"
+                        style="padding: 10px 18px; border: 1px solid #cbd5e1; background: white; border-radius: 8px; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='#f8fafc'"
+                        onmouseout="this.style.background='white'">Batal</button>
+                    <button type="submit"
+                        style="padding: 10px 18px; background: #0f172a; border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">Buat
+                        Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="customDeleteModal"
+        style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 9999; justify-content: center; align-items: center;"
+        onclick="if(event.target === this) closeDeleteModal();">
+        <div
+            style="background: white; padding: 28px; border-radius: 12px; width: 380px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+            <div
+                style="width: 48px; height: 48px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            </div>
+            <h3 style="margin-top: 0; font-size: 18px; font-weight: 600; color: #0f172a; margin-bottom: 8px;">Hapus
+                Dokumen?</h3>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 24px; line-height: 1.5;">Apakah Anda yakin ingin
+                menghapus <strong id="modalDocTitle" style="color: #0f172a;"></strong>? Tindakan ini permanen dan tidak
+                dapat dibatalkan.</p>
+
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button onclick="closeDeleteModal()"
+                    style="padding: 10px 20px; border: 1px solid #cbd5e1; background: white; border-radius: 8px; cursor: pointer; color: #475569; font-size: 14px; font-weight: 600; transition: background 0.2s;"
+                    onmouseover="this.style.background='#f8fafc'"
+                    onmouseout="this.style.background='white'">Batal</button>
+                <form id="confirmDeleteForm" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                        style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: background 0.2s;"
+                        onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Ya,
+                        Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const resizer = document.getElementById('resizer');
+        const toggleBtn = document.getElementById('toggle-sidebar-btn');
+        let isResizing = false;
+        let isSidebarOpen = true;
+
+        toggleBtn.addEventListener('click', () => {
+            if (isSidebarOpen) {
+                sidebar.style.marginLeft = `-${sidebar.offsetWidth}px`;
+                resizer.style.pointerEvents = 'none';
+                isSidebarOpen = false;
+            } else {
+                sidebar.style.width = '260px';
+                sidebar.style.marginLeft = '0px';
+                resizer.style.pointerEvents = 'auto';
+                isSidebarOpen = true;
+            }
+        });
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            let newWidth = e.clientX;
+            if (newWidth < 200) newWidth = 200;
+            if (newWidth > 600) newWidth = 600;
+            sidebar.style.width = newWidth + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('active');
+                document.body.style.cursor = 'default';
+            }
+        });
+
+        function toggleFolder(folderId) {
+            const content = document.getElementById(folderId);
+            const arrow = document.getElementById(folderId.replace('folder-', 'arrow-'));
+            if (content.style.display === "none" || content.style.display === "") {
+                content.style.display = "block";
+                arrow.style.transform = "rotate(180deg)";
+            } else {
+                content.style.display = "none";
+                arrow.style.transform = "rotate(0deg)";
+            }
+        }
+
+        function openDeleteModal(deleteUrl, docTitle) {
+            document.getElementById('customDeleteModal').style.display = 'flex';
+            document.getElementById('modalDocTitle').innerText = docTitle;
+            document.getElementById('confirmDeleteForm').action = deleteUrl;
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('customDeleteModal').style.display = 'none';
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

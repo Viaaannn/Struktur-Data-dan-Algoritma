@@ -1,0 +1,127 @@
+{% extends 'notes/base.html' %}
+
+{% block title %}Folder: {{ category.name }} — KOSTHINK{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'notes:dashboard' %}" style="text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">Home</a>
+    <span style="color: #cbd5e1;">/</span>
+    <span style="color: #0f172a; font-weight: 600;">{{ category.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 24px; max-width: 1000px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 10px; margin: 0;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                {{ category.name }}
+            </h1>
+            <p style="font-size: 13px; color: #64748b; margin: 6px 0 0 0;">Terdapat <strong>{{ documents.count }}</strong> dokumen di dalam folder ini</p>
+        </div>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <form action="{% url 'notes:new_document' %}" method="get" style="margin: 0;">
+                <input type="hidden" name="category_id" value="{{ category.id }}">
+                <button type="submit" style="background: #0f172a; color: white; border: none; font-size: 13px; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Tambah Dokumen
+                </button>
+            </form>
+
+            <a href="{% url 'notes:dashboard' %}" style="text-decoration: none; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; font-size: 13px; padding: 8px 16px; display: flex; align-items: center; gap: 6px; font-weight: 500; background: white;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Kembali ke Beranda
+            </a>
+        </div>
+    </div>
+
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b;">
+                    <th style="padding: 14px 20px; font-weight: 600;">Nama Dokumen</th>
+                    <th style="padding: 14px 20px; font-weight: 600;">Terakhir Diubah</th>
+                    <th style="padding: 14px 20px; font-weight: 600; text-align: center; width: 180px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr style="border-bottom: 1px solid #f1f5f9; color: #0f172a;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 14px 20px; font-weight: 500;">
+                        <a href="{% url 'notes:editor' doc.id %}" style="color: #475569; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            {{ doc.title }}
+                        </a>
+                    </td>
+                    <td style="padding: 14px 20px; color: #64748b;">{{ doc.updated_at|date:"d M Y, H:i" }} WIB</td>
+                    
+                    <td style="padding: 14px 20px; text-align: center;">
+                        <div style="display: flex; justify-content: center; gap: 8px;">
+                            <button onclick="document.getElementById('renameDocModal{{ doc.id }}').style.display='flex'" style="background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 4px; color: #475569; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Rename</button>
+                            
+                            <button type="button" data-url="{% url 'notes:delete_document' doc.id %}" data-title="{{ doc.title }}"
+                                onclick="openDeleteModal(this.getAttribute('data-url'), this.getAttribute('data-title'))"
+                                style="background: #fee2e2; border: none; padding: 6px 12px; border-radius: 4px; color: #ef4444; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+                                Hapus
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+
+                <div id="renameDocModal{{ doc.id }}" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); display: none; justify-content: center; align-items: center; z-index: 9999;" onclick="if(event.target === this) this.style.display='none';">
+                    <div style="background: white; padding: 24px; border-radius: 8px; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: left;">
+                        <h3 style="margin-top: 0; font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 16px;">Ubah Nama Dokumen</h3>
+                        <form action="{% url 'notes:rename_document' doc.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <input type="text" name="title" value="{{ doc.title }}" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box; outline: none;">
+                            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                <button type="button" onclick="document.getElementById('renameDocModal{{ doc.id }}').style.display='none'" style="padding: 8px 16px; border: 1px solid #cbd5e1; background: white; border-radius: 6px; color: #64748b; font-size: 13px; font-weight: 500; cursor: pointer;">Batal</button>
+                                <button type="submit" style="padding: 8px 16px; background: #0f172a; border: none; border-radius: 6px; color: white; font-size: 13px; font-weight: 500; cursor: pointer;">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 40px; text-align: center; color: #64748b;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px; color: #cbd5e1;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        <p style="margin: 0;">Folder ini masih kosong. Belum ada dokumen di dalamnya.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="deleteDocModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); display: none; justify-content: center; align-items: center; z-index: 9999;" onclick="if(event.target === this) this.style.display='none';">
+    <div style="background: white; padding: 32px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center;">
+        <div style="width: 56px; height: 56px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+        </div>
+        <h3 style="margin-top: 0; font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Hapus Dokumen?</h3>
+        <p style="color: #64748b; font-size: 15px; margin-bottom: 32px; line-height: 1.5;">Apakah Anda yakin ingin menghapus dokumen <strong id="deleteDocTitle" style="color: #0f172a;"></strong>?</p>
+        <form id="deleteDocForm" method="post" action="">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: center; gap: 12px;">
+                <button type="button" onclick="document.getElementById('deleteDocModal').style.display='none'" style="padding: 12px 20px; border: 1px solid #cbd5e1; background: white; border-radius: 8px; color: #64748b; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'">Batal</button>
+                <button type="submit" style="padding: 12px 20px; background: #ef4444; border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; transition: all 0.2s;" onmouseover="this.style.background='#dc2626'">Ya, Hapus</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openDeleteModal(url, docTitle) {
+        document.getElementById('deleteDocForm').action = url;
+        document.getElementById('deleteDocTitle').textContent = docTitle;
+        document.getElementById('deleteDocModal').style.display = 'flex';
+    }
+</script>
+{% endblock %}
